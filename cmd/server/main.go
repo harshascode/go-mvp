@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/imputnet/cobalt/go-mvp/internal/config"
-	"github.com/imputnet/cobalt/go-mvp/internal/downloader"
-	"github.com/imputnet/cobalt/go-mvp/internal/httpapi"
-	"github.com/imputnet/cobalt/go-mvp/internal/jobs"
+	"go-mvp/internal/config"
+	"go-mvp/internal/downloader"
+	"go-mvp/internal/httpapi"
+	"go-mvp/internal/jobs"
 )
 
 func main() {

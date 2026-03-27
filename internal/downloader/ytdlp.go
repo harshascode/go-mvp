@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/imputnet/cobalt/go-mvp/internal/config"
-	"github.com/imputnet/cobalt/go-mvp/internal/jobs"
+	"go-mvp/internal/config"
+	"go-mvp/internal/jobs"
 )
 
 type Runner struct {

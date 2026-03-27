@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/imputnet/cobalt/go-mvp/internal/downloader"
-	"github.com/imputnet/cobalt/go-mvp/internal/jobs"
+	"go-mvp/internal/downloader"
+	"go-mvp/internal/jobs"
 )
 
 type Server struct {
