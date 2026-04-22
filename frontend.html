@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Downloader MVP - Dark</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #334155;
+            --border: #475569;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 480px;
+            border: 1px solid var(--border);
+        }
+
+        h1 { margin: 0 0 1.5rem 0; font-size: 1.5rem; text-align: center; color: var(--primary); }
+
+        .form-group { margin-bottom: 1.2rem; }
+        
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.025em; }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            color: white;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus { border-color: var(--primary); }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        button:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        #result {
+            margin-top: 1.5rem;
+            padding: 1.2rem;
+            border-radius: 8px;
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .success { background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; color: #4ade80; }
+        .error { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #f87171; }
+
+        .download-btn {
+            display: block;
+            margin-top: 12px;
+            text-decoration: none;
+            background: #22c55e;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .download-btn:hover { background: #16a34a; }
+
+        small { color: var(--text-muted); display: block; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Media MVP</h1>
+    
+    <div class="form-group">
+        <label for="url">Target URL</label>
+        <input type="text" id="url" placeholder="Paste link here..." required>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+        <div class="form-group" style="flex: 1;">
+            <label for="mode">Type</label>
+            <select id="mode">
+                <option value="video">Video</option>
+                <option value="audio">Audio</option>
+            </select>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label for="quality">Quality</label>
+            <select id="quality"></select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="format">Format</label>
+        <select id="format"></select>
+    </div>
+
+    <button id="submitBtn">Generate Link</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    const API_BASE = "http://localhost:8080";
+    
+    const config = {
+        video: {
+            qualities: ['best', '4320', '2160', '1440', '1080', '720', '480', '360', '240', '144'],
+            formats: ['mp4', 'webm', 'mkv']
+        },
+        audio: {
+            qualities: ['best', '320', '256', '192', '128', '96', '64'],
+            formats: ['mp3', 'm4a', 'opus', 'wav', 'flac']
+        }
+    };
+
+    const modeEl = document.getElementById('mode');
+    const qualityEl = document.getElementById('quality');
+    const formatEl = document.getElementById('format');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultEl = document.getElementById('result');
+
+    function updateOptions() {
+        const mode = modeEl.value;
+        qualityEl.innerHTML = config[mode].qualities.map(q => `<option value="${q}">${q}</option>`).join('');
+        formatEl.innerHTML = config[mode].formats.map(f => `<option value="${f}">${f}</option>`).join('');
+    }
+
+    modeEl.addEventListener('change', updateOptions);
+    updateOptions(); 
+
+    submitBtn.addEventListener('click', async () => {
+        const url = document.getElementById('url').value;
+        if (!url) return;
+
+        // Reset UI
+        resultEl.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Processing...";
+
+        try {
+            const response = await fetch(`${API_BASE}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: url,
+                    mode: modeEl.value,
+                    quality: qualityEl.value,
+                    format: formatEl.value
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                resultEl.className = 'success';
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = `
+                    <div style="font-weight:bold; margin-bottom: 5px;">${data.title}</div>
+                    <small>${data.service.toUpperCase()} • ${data.quality}${modeEl.value === 'audio' ? 'kbps' : 'p'}</small>
+                    <a href="${data.downloadUrl}" class="download-btn">Download Now</a>
+                `;
+            } else {
+                throw new Error(data.message || "Server Error");
+            }
+        } catch (err) {
+            resultEl.className = 'error';
+            resultEl.style.display = 'block';
+            resultEl.innerText = "Error: " + err.message;
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Generate Link";
+        }
+    });
+</script>
+
+</body>
+</html>
