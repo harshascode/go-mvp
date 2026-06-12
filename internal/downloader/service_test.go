@@ -2,24 +2,21 @@ package downloader
 
 import "testing"
 
-func TestSupportedService(t *testing.T) {
+func TestIsYouTube(t *testing.T) {
 	tests := []struct {
-		url      string
-		want     string
-		expected bool
+		url  string
+		want bool
 	}{
-		{"https://www.youtube.com/watch?v=1", "youtube", true},
-		{"https://youtu.be/1", "youtube", true},
-		{"https://www.instagram.com/reel/abc", "instagram", true},
-		{"https://vm.tiktok.com/abc", "tiktok", true},
-		{"https://pin.it/abc", "pinterest", true},
-		{"https://example.com/file.mp4", "", false},
+		{"https://www.youtube.com/watch?v=1", true},
+		{"https://youtu.be/1", true},
+		{"https://music.youtube.com/watch?v=1", true},
+		{"https://example.com/file.mp4", false},
+		{"not-a-url", false},
 	}
 
 	for _, tt := range tests {
-		got, ok := SupportedService(tt.url)
-		if ok != tt.expected || got != tt.want {
-			t.Fatalf("SupportedService(%q) = (%q, %v), want (%q, %v)", tt.url, got, ok, tt.want, tt.expected)
+		if got := IsYouTube(tt.url); got != tt.want {
+			t.Fatalf("IsYouTube(%q) = %v, want %v", tt.url, got, tt.want)
 		}
 	}
 }
